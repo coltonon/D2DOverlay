@@ -6,6 +6,7 @@
 #include <comdef.h>
 #include <iostream>
 #include <ctime>
+#include <ShObjIdl_core.h>
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwmapi.lib")
 #pragma comment(lib, "dwrite.lib")
@@ -102,6 +103,20 @@ void d2oSetup(HWND tWindow) {
 	DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&w_factory));
 	w_factory->CreateTextFormat(fontname.c_str(), NULL, DWRITE_FONT_WEIGHT_NORMAL, 
 		DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &w_format);
+	
+	ITaskbarList* pTaskList = NULL;
+	HRESULT initRet = CoInitialize(NULL);
+	HRESULT createRet = CoCreateInstance(CLSID_TaskbarList,
+		NULL,
+		CLSCTX_INPROC_SERVER,
+		IID_ITaskbarList,
+		(LPVOID*)&pTaskList);
+	if (createRet == S_OK)
+	{
+		pTaskList->DeleteTab(overlayWindow);
+
+		pTaskList->Release();
+	}
 }
 
 void mainLoop() {
