@@ -10,21 +10,21 @@
 #pragma comment(lib, "dwmapi.lib")
 #pragma comment(lib, "dwrite.lib")
 
-ID2D1Factory* factory;
-ID2D1HwndRenderTarget* target;
-ID2D1SolidColorBrush* solid_brush;
-IDWriteFactory* w_factory;
-IDWriteTextFormat* w_format;
-IDWriteTextLayout* w_layout;
-HWND overlayWindow;
-HINSTANCE appInstance;
-HWND targetWindow;
+ID2D1Factory* factory = NULL;
+ID2D1HwndRenderTarget* target = NULL;
+ID2D1SolidColorBrush* solid_brush = NULL;
+IDWriteFactory* w_factory = NULL;
+IDWriteTextFormat* w_format = NULL;
+IDWriteTextLayout* w_layout = NULL;
+HWND overlayWindow = NULL;
+HINSTANCE appInstance = NULL;
+HWND targetWindow = NULL;
 HWND enumWindow = NULL;
 time_t preTime = clock();
 time_t showTime = clock();
 int fps = 0;
 
-bool o_Foreground = false;
+bool o_Foreground = true;
 bool o_DrawFPS = false;
 bool o_VSync = false;
 std::wstring fontname = L"Courier";
@@ -85,7 +85,7 @@ void d2oSetup(HWND tWindow) {
 	wc.hInstance = GetModuleHandle(0);
 	wc.lpszClassName = "d2do";
 	RegisterClass(&wc);
-	overlayWindow = CreateWindowEx(WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST, 
+	overlayWindow = CreateWindowEx(WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
 		wc.lpszClassName, "D2D Overlay", WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 
 		NULL, NULL, wc.hInstance, NULL);
 	
@@ -132,11 +132,13 @@ void mainLoop() {
 		}
 		target->BeginDraw();
 		target->Clear(D2D1::ColorF(0, 0, 0, 0));
+
 		if (drawLoopCallback != NULL) {
 			if (o_Foreground) {
 				if (GetForegroundWindow() == targetWindow) 
 					goto toDraw;
-				else goto noDraw;
+				else 
+					goto noDraw;
 			}
 
 			toDraw: 
@@ -161,6 +163,7 @@ void mainLoop() {
 			
 			drawLoopCallback(siz.width, siz.height);
 		}
+
 		noDraw:
 		target->EndDraw();
 		Sleep(1);
@@ -171,11 +174,18 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uiMessage, WPARAM wParam, LPARAM lPa
 {
 	switch (uiMessage)
 	{
+	case WM_CREATE:
+		::SetTimer(hWnd, 1, 1000, NULL);
+		break;
 	case WM_CLOSE:
 		DestroyWindow(hWnd);
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
+		break;
+	case WM_TIMER:
+		if (!::IsWindow(targetWindow))
+			DestroyWindow(hWnd);
 		break;
 	default:
 		return DefWindowProc(hWnd, uiMessage, wParam, lParam);
@@ -195,6 +205,7 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 	return TRUE;
 }
 
+HANDLE evOverlayWindowCreate = NULL;
 DWORD WINAPI OverlayThread(LPVOID lpParam)
 {
 	if (lpParam == NULL) {
@@ -204,19 +215,36 @@ DWORD WINAPI OverlayThread(LPVOID lpParam)
 		enumWindow = (HWND)lpParam;
 	}
 	d2oSetup(enumWindow);
-	for (;;) {
+	SetEvent(evOverlayWindowCreate);
+
+	for (; IsDirectOverlayRunning(); ) {
 		mainLoop();
 	}
+
+	return 0;
 }
 
 void DirectOverlaySetup(DirectOverlayCallback callback) {
 	drawLoopCallback = callback;
+
+	evOverlayWindowCreate = CreateEvent(NULL, TRUE, FALSE, NULL);
 	CreateThread(0, 0, OverlayThread, NULL, 0, NULL);
+	WaitForSingleObject(evOverlayWindowCreate, INFINITE);
+	CloseHandle(evOverlayWindowCreate);
 }
 
 void DirectOverlaySetup(DirectOverlayCallback callback, HWND _targetWindow) {
 	drawLoopCallback = callback;
+
+	evOverlayWindowCreate = CreateEvent(NULL, TRUE, FALSE, NULL);
 	CreateThread(0, 0, OverlayThread, _targetWindow, 0, NULL);
+	WaitForSingleObject(evOverlayWindowCreate, INFINITE);
+	CloseHandle(evOverlayWindowCreate);
+}
+
+BOOL IsDirectOverlayRunning()
+{
+	return ::IsWindow(overlayWindow);
 }
 
 void DirectOverlaySetOption(DWORD option) {

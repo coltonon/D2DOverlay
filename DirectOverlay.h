@@ -28,7 +28,7 @@
 #include <string>
 
 // Link the static library (make sure that file is in the same directory as this file)
-#pragma comment(lib, "D2DOverlay.lib")
+//#pragma comment(lib, "D2DOverlay.lib")
 
 // Requires the targetted window to be active and the foreground window to draw.
 #define D2DOV_REQUIRE_FOREGROUND	(1 << 0)
@@ -66,6 +66,9 @@ void DirectOverlaySetup(DirectOverlayCallback callbackFunction);
 
 // Used to specify the window manually, to be used with externals.
 void DirectOverlaySetup(DirectOverlayCallback callbackFunction, HWND targetWindow);
+
+// Tell direct overlay is running
+BOOL IsDirectOverlayRunning();
 
 // Draws a line from (x1, y1) to (x2, y2), with a specified thickness.
 // Specify the color, and optionally an alpha for the line.

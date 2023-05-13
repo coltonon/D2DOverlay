@@ -1,4 +1,4 @@
-#include "DirectOverlay.h"
+#include "..\..\DirectOverlay.h"
 
 void drawLoop(int width, int height) {
 	DrawLine(0, 0, 100, 100, 5, 1, 1, 0, .8);
@@ -12,7 +12,9 @@ DWORD WINAPI MainThread(LPVOID lpParam)
 {
 	DirectOverlaySetOption(D2DOV_DRAW_FPS | D2DOV_FONT_IMPACT);
 	DirectOverlaySetup(drawLoop);
-	for (;;) { Sleep(100); }
+	while (IsDirectOverlayRunning())
+		Sleep(1000);
+	return 0;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwAttached, LPVOID lpvReserved)

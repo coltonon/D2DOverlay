@@ -1,0 +1,13 @@
+/x64
+/examples/x64
+/.vs
+/examples/.vs
+/examples/D2DOverlay Test External/x64
+/examples/D2DOverlay Test Internal/x64
+/examples/D2DOverlay Test External.VC.db
+/examples/*.opendb
+/examples/D2DOverlay Test External/Debug
+/examples/Debug
+/examples/D2DOverlay Test Internal.VC.db
+/examples/D2DOverlay Test Internal/Debug
+/examples/ipch

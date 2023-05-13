@@ -18,9 +18,12 @@
     <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\DirectOverlay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DirectOverlay.h">
+    <ClInclude Include="..\..\DirectOverlay.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

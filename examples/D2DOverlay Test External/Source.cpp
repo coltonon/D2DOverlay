@@ -1,4 +1,4 @@
-#include "DirectOverlay.h"
+#include "..\..\DirectOverlay.h"
 
 void drawLoop(int width, int height) {
 	DrawLine(0, 0, 100, 100, 5, 1, 1, 0, .8);
@@ -12,5 +12,6 @@ void main()
 {
 	DirectOverlaySetOption(D2DOV_DRAW_FPS | D2DOV_FONT_IMPACT);
 	DirectOverlaySetup(drawLoop, FindWindow(NULL, "untitled - notepad"));
-	getchar();
+	while (IsDirectOverlayRunning())
+		Sleep(1000);
 }
