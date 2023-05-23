@@ -10,7 +10,8 @@ void drawLoop(int width, int height) {
 
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
-	DirectOverlaySetOption(D2DOV_DRAW_FPS | D2DOV_FONT_IMPACT);
+	DirectOverlaySetOption(D2DOV_DRAW_FPS);
+	DirectOverlaySetFontName(L"»ªÎÄçúçê");
 	DirectOverlaySetup(drawLoop);
 	while (IsDirectOverlayRunning())
 		Sleep(1000);
@@ -19,8 +20,13 @@ DWORD WINAPI MainThread(LPVOID lpParam)
 
 BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwAttached, LPVOID lpvReserved)
 {
-	if (dwAttached == DLL_PROCESS_ATTACH) {
+	if (dwAttached == DLL_PROCESS_ATTACH) 
+	{
 		CreateThread(0, 0, MainThread, hModule, 0, NULL);
+	}
+	else if (dwAttached == DLL_PROCESS_DETACH)
+	{
+		DirectOverlayStop();
 	}
 	return 1;
 }

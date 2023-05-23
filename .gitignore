@@ -11,3 +11,6 @@
 /examples/D2DOverlay Test Internal.VC.db
 /examples/D2DOverlay Test Internal/Debug
 /examples/ipch
+/examples/D2DOverlay Test Internal Host Test/x64
+/examples/MFCApplication1/x64
+/examples/MFCApplication1/*.aps
