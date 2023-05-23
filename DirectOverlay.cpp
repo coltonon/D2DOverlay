@@ -64,6 +64,7 @@ void DrawString(const std::wstring& str, float fontSize, float x, float y,
 void DrawBox(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled, float opacity/* = 1*/)
 {
 	solid_brush->SetColor(D2D1::ColorF(r, g, b, a));
+	solid_brush->SetOpacity(opacity);
 	if (filled)  target->FillRectangle(D2D1::RectF(x, y, x + width, y + height), solid_brush);
 	else target->DrawRectangle(D2D1::RectF(x, y, x + width, y + height), solid_brush, thickness);
 }
@@ -71,12 +72,14 @@ void DrawBox(float x, float y, float width, float height, float thickness, float
 void DrawLine(float x1, float y1, float x2, float y2, float thickness, float r, float g, float b, float a, float opacity/* = 1*/) 
 {
 	solid_brush->SetColor(D2D1::ColorF(r, g, b, a));
+	solid_brush->SetOpacity(opacity);
 	target->DrawLine(D2D1::Point2F(x1, y1), D2D1::Point2F(x2, y2), solid_brush, thickness);
 }
 
 void DrawCircle(float x, float y, float radius, float thickness, float r, float g, float b, float a, bool filled, float opacity/* = 1*/)
 {
 	solid_brush->SetColor(D2D1::ColorF(r, g, b, a));
+	solid_brush->SetOpacity(opacity);
 	if (filled) target->FillEllipse(D2D1::Ellipse(D2D1::Point2F(x, y), radius, radius), solid_brush);
 	else target->DrawEllipse(D2D1::Ellipse(D2D1::Point2F(x, y), radius, radius), solid_brush, thickness);
 }
@@ -84,6 +87,7 @@ void DrawCircle(float x, float y, float radius, float thickness, float r, float 
 void DrawEllipse(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled, float opacity/* = 1*/)
 {
 	solid_brush->SetColor(D2D1::ColorF(r, g, b, a));
+	solid_brush->SetOpacity(opacity);
 	if (filled) target->FillEllipse(D2D1::Ellipse(D2D1::Point2F(x, y), width, height), solid_brush);
 	else target->DrawEllipse(D2D1::Ellipse(D2D1::Point2F(x, y), width, height), solid_brush, thickness);
 }
