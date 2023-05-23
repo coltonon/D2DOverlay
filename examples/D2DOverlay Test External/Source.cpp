@@ -8,10 +8,18 @@ void drawLoop(int width, int height) {
 	DrawEllipse(500, 100, 50, 20, 5, 1, 0, 0, 1, 0);
 }
 
+//HWND g_hwnd = NULL;
+HWND getHwndCallback()
+{
+	return GetForegroundWindow();
+	//return g_hwnd;
+}
+
 void main()
 {
+	//g_hwnd = FindWindow(NULL, "无标题 - 记事本");
 	DirectOverlaySetOption(D2DOV_DRAW_FPS | D2DOV_FONT_IMPACT);
-	DirectOverlaySetup(drawLoop, FindWindow(NULL, "untitled - notepad"));
+	DirectOverlaySetup(drawLoop, getHwndCallback);
 	while (IsDirectOverlayRunning())
 		Sleep(1000);
 }

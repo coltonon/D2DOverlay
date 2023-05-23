@@ -18,8 +18,7 @@ IDWriteTextFormat* w_format = NULL;
 IDWriteTextLayout* w_layout = NULL;
 HWND overlayWindow = NULL;
 HINSTANCE appInstance = NULL;
-HWND targetWindow = NULL;
-HWND enumWindow = NULL;
+HWND(*targetWindow)(void) = NULL;
 time_t preTime = clock();
 time_t showTime = clock();
 int fps = 0;
@@ -56,7 +55,7 @@ void DrawBox(float x, float y, float width, float height, float thickness, float
 {
 	solid_brush->SetColor(D2D1::ColorF(r, g, b, a));
 	if (filled)  target->FillRectangle(D2D1::RectF(x, y, x + width, y + height), solid_brush);
-	else target->DrawRectangle(D2D1::RectF(x, y, x + width, y +height), solid_brush, thickness);
+	else target->DrawRectangle(D2D1::RectF(x, y, x + width, y + height), solid_brush, thickness);
 }
 
 void DrawLine(float x1, float y1, float x2, float y2, float thickness, float r, float g, float b, float a) {
@@ -75,32 +74,33 @@ void DrawEllipse(float x, float y, float width, float height, float thickness, f
 {
 	solid_brush->SetColor(D2D1::ColorF(r, g, b, a));
 	if (filled) target->FillEllipse(D2D1::Ellipse(D2D1::Point2F(x, y), width, height), solid_brush);
-	else target->DrawEllipse(D2D1::Ellipse(D2D1::Point2F(x, y), width, height), solid_brush, thickness); 
+	else target->DrawEllipse(D2D1::Ellipse(D2D1::Point2F(x, y), width, height), solid_brush, thickness);
 }
 
-void d2oSetup(HWND tWindow) {
-	targetWindow = tWindow;
+void d2oSetup(HWND(*_targetWindow)(void)) {
+	targetWindow = _targetWindow;
+
 	WNDCLASS wc = { };
 	wc.lpfnWndProc = WindowProc;
 	wc.hInstance = GetModuleHandle(0);
 	wc.lpszClassName = "d2do";
 	RegisterClass(&wc);
 	overlayWindow = CreateWindowEx(WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
-		wc.lpszClassName, "D2D Overlay", WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 
+		wc.lpszClassName, "D2D Overlay", WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		NULL, NULL, wc.hInstance, NULL);
-	
+
 	MARGINS mar = { -1 };
 	DwmExtendFrameIntoClientArea(overlayWindow, &mar);
 	D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &factory);
 	factory->CreateHwndRenderTarget(
 		D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT,
 			D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED)),
-		D2D1::HwndRenderTargetProperties(overlayWindow, D2D1::SizeU(200, 200), 
+		D2D1::HwndRenderTargetProperties(overlayWindow, D2D1::SizeU(200, 200),
 			D2D1_PRESENT_OPTIONS_IMMEDIATELY), &target);
 	target->CreateSolidColorBrush(D2D1::ColorF(0.0f, 0.0f, 0.0f), &solid_brush);
 	target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 	DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&w_factory));
-	w_factory->CreateTextFormat(fontname.c_str(), NULL, DWRITE_FONT_WEIGHT_NORMAL, 
+	w_factory->CreateTextFormat(fontname.c_str(), NULL, DWRITE_FONT_WEIGHT_NORMAL,
 		DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &w_format);
 }
 
@@ -119,10 +119,23 @@ void mainLoop() {
 		}
 
 		UpdateWindow(overlayWindow);
+
+		if (!targetWindow)
+		{
+			Sleep(1);
+			return;
+		}
+		HWND hwndTarget = targetWindow();
+		if (!::IsWindow(hwndTarget))
+		{
+			Sleep(1);
+			return;
+		}
+
 		WINDOWINFO info;
 		ZeroMemory(&info, sizeof(info));
 		info.cbSize = sizeof(info);
-		GetWindowInfo(targetWindow, &info);
+		GetWindowInfo(hwndTarget, &info);
 		D2D1_SIZE_U siz;
 		siz.height = ((info.rcClient.bottom) - (info.rcClient.top));
 		siz.width = ((info.rcClient.right) - (info.rcClient.left));
@@ -135,13 +148,13 @@ void mainLoop() {
 
 		if (drawLoopCallback != NULL) {
 			if (o_Foreground) {
-				if (GetForegroundWindow() == targetWindow) 
+				if (GetForegroundWindow() == hwndTarget)
 					goto toDraw;
-				else 
+				else
 					goto noDraw;
 			}
 
-			toDraw: 
+		toDraw:
 			time_t postTime = clock();
 			time_t frameTime = postTime - preTime;
 			preTime = postTime;
@@ -160,11 +173,11 @@ void mainLoop() {
 					Sleep(pausetime);
 				}
 			}
-			
+
 			drawLoopCallback(siz.width, siz.height);
 		}
 
-		noDraw:
+	noDraw:
 		target->EndDraw();
 		Sleep(1);
 	}
@@ -175,7 +188,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uiMessage, WPARAM wParam, LPARAM lPa
 	switch (uiMessage)
 	{
 	case WM_CREATE:
-		::SetTimer(hWnd, 1, 1000, NULL);
+		//::SetTimer(hWnd, 1, 1000, NULL);
 		break;
 	case WM_CLOSE:
 		DestroyWindow(hWnd);
@@ -183,38 +196,38 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uiMessage, WPARAM wParam, LPARAM lPa
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
-	case WM_TIMER:
-		if (!::IsWindow(targetWindow))
-			DestroyWindow(hWnd);
-		break;
+		//case WM_TIMER:
+		//	if (!::IsWindow(targetWindow))
+		//		DestroyWindow(hWnd);
+		//	break;
 	default:
 		return DefWindowProc(hWnd, uiMessage, wParam, lParam);
 	}
 	return 0;
 }
 
-BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
-{
-	DWORD lpdwProcessId;
-	GetWindowThreadProcessId(hwnd, &lpdwProcessId);
-	if (lpdwProcessId == GetCurrentProcessId())
-	{
-		enumWindow = hwnd;
-		return FALSE;
-	}
-	return TRUE;
-}
+//BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
+//{
+//	DWORD lpdwProcessId;
+//	GetWindowThreadProcessId(hwnd, &lpdwProcessId);
+//	if (lpdwProcessId == GetCurrentProcessId())
+//	{
+//		enumWindow = hwnd;
+//		return FALSE;
+//	}
+//	return TRUE;
+//}
 
 HANDLE evOverlayWindowCreate = NULL;
 DWORD WINAPI OverlayThread(LPVOID lpParam)
 {
-	if (lpParam == NULL) {
-		EnumWindows(EnumWindowsProc, NULL);
-	}
-	else {
-		enumWindow = (HWND)lpParam;
-	}
-	d2oSetup(enumWindow);
+	//if (lpParam == NULL) {
+	//	EnumWindows(EnumWindowsProc, NULL);
+	//}
+	//else {
+	//	enumWindow = (HWND)lpParam;
+	//}
+	d2oSetup((HWND(*)())lpParam);
 	SetEvent(evOverlayWindowCreate);
 
 	for (; IsDirectOverlayRunning(); ) {
@@ -233,7 +246,7 @@ void DirectOverlaySetup(DirectOverlayCallback callback) {
 	CloseHandle(evOverlayWindowCreate);
 }
 
-void DirectOverlaySetup(DirectOverlayCallback callback, HWND _targetWindow) {
+void DirectOverlaySetup(DirectOverlayCallback callback, HWND(*_targetWindow)(void)) {
 	drawLoopCallback = callback;
 
 	evOverlayWindowCreate = CreateEvent(NULL, TRUE, FALSE, NULL);

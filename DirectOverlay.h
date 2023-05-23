@@ -65,7 +65,7 @@ typedef void(*DirectOverlayCallback)(int width, int height);
 void DirectOverlaySetup(DirectOverlayCallback callbackFunction);
 
 // Used to specify the window manually, to be used with externals.
-void DirectOverlaySetup(DirectOverlayCallback callbackFunction, HWND targetWindow);
+void DirectOverlaySetup(DirectOverlayCallback callbackFunction, HWND(*_targetWindow)(void));
 
 // Tell direct overlay is running
 BOOL IsDirectOverlayRunning();
