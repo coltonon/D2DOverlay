@@ -70,23 +70,27 @@ void DirectOverlaySetup(DirectOverlayCallback callbackFunction, HWND(*_targetWin
 // Tell direct overlay is running
 BOOL IsDirectOverlayRunning();
 
-//Destory overlay window
+// Enable direct overlay
+void DirectOverlayEnable(BOOL bEnable);
+BOOL IsDirectOverlayEnable();
+
+// Destory overlay window
 void DirectOverlayStop();
 
 // Draws a line from (x1, y1) to (x2, y2), with a specified thickness.
 // Specify the color, and optionally an alpha for the line.
-void DrawLine(float x1, float y1, float x2, float y2, float thickness, float r, float g, float b, float a = 1);
+void DrawLine(float x1, float y1, float x2, float y2, float thickness, float r, float g, float b, float a = 1, float opacity = 1);
 
 // Draws a rectangle on the screen.  Width and height are relative to the coordinates of the box.  
 // Use the "filled" bool to make it a solid rectangle; ignore the thickness.
 // To just draw the border around the rectangle, specify a thickness and pass "filled" as false.
-void DrawBox(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled);
+void DrawBox(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled, float opacity = 1);
 
 // Draws a circle.  As with the DrawBox, the "filled" bool will make it a solid circle, and thickness is only used when filled=false.
-void DrawCircle(float x, float y, float radius, float thickness, float r, float g, float b, float a, bool filled);
+void DrawCircle(float x, float y, float radius, float thickness, float r, float g, float b, float a, bool filled, float opacity = 1);
 
 // Allows you to draw an elipse.  Same as a circle, except you have two different radii, for width and height.
-void DrawEllipse(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled);
+void DrawEllipse(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled, float opacity = 1);
 
 // Draw a string on the screen.  Input is in the form of an std::string.
-void DrawString(std::string str, float fontSize, float x, float y, float r, float g, float b, float a = 1);
+void DrawString(const std::wstring& str, float fontSize, float x, float y, float r, float g, float b, float a = 1, float opacity = 1);

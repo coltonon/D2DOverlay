@@ -7,6 +7,7 @@
 #include <iostream>
 #include <ctime>
 #include <tchar.h>
+#include <mutex>
 
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwmapi.lib")
@@ -31,49 +32,56 @@ bool o_DrawFPS = false;
 bool o_VSync = false;
 std::wstring fontname = L"Courier";
 
+std::mutex mutexEnable;
+BOOL enable = TRUE;
+
 DirectOverlayCallback drawLoopCallback = NULL;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-void DrawString(std::string str, float fontSize, float x, float y, float r, float g, float b, float a)
+void DrawString(const std::wstring& str, float fontSize, float x, float y, 
+	float r, float g, float b, float a/* = 1*/, float opacity/* = 1*/)
 {
 	RECT re;
 	GetClientRect(overlayWindow, &re);
 	FLOAT dpix, dpiy;
 	dpix = static_cast<float>(re.right - re.left);
 	dpiy = static_cast<float>(re.bottom - re.top);
-	HRESULT res = w_factory->CreateTextLayout(std::wstring(str.begin(), str.end()).c_str(), str.length() + 1, w_format, dpix, dpiy, &w_layout);
+	HRESULT res = w_factory->CreateTextLayout(
+		str.c_str(), str.length(), w_format, dpix, dpiy, &w_layout);
 	if (SUCCEEDED(res))
 	{
 		DWRITE_TEXT_RANGE range = { 0, str.length() };
 		w_layout->SetFontSize(fontSize, range);
 		solid_brush->SetColor(D2D1::ColorF(r, g, b, a));
+		solid_brush->SetOpacity(opacity);
 		target->DrawTextLayout(D2D1::Point2F(x, y), w_layout, solid_brush);
 		w_layout->Release();
 		w_layout = NULL;
 	}
 }
 
-void DrawBox(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled)
+void DrawBox(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled, float opacity/* = 1*/)
 {
 	solid_brush->SetColor(D2D1::ColorF(r, g, b, a));
 	if (filled)  target->FillRectangle(D2D1::RectF(x, y, x + width, y + height), solid_brush);
 	else target->DrawRectangle(D2D1::RectF(x, y, x + width, y + height), solid_brush, thickness);
 }
 
-void DrawLine(float x1, float y1, float x2, float y2, float thickness, float r, float g, float b, float a) {
+void DrawLine(float x1, float y1, float x2, float y2, float thickness, float r, float g, float b, float a, float opacity/* = 1*/) 
+{
 	solid_brush->SetColor(D2D1::ColorF(r, g, b, a));
 	target->DrawLine(D2D1::Point2F(x1, y1), D2D1::Point2F(x2, y2), solid_brush, thickness);
 }
 
-void DrawCircle(float x, float y, float radius, float thickness, float r, float g, float b, float a, bool filled)
+void DrawCircle(float x, float y, float radius, float thickness, float r, float g, float b, float a, bool filled, float opacity/* = 1*/)
 {
 	solid_brush->SetColor(D2D1::ColorF(r, g, b, a));
 	if (filled) target->FillEllipse(D2D1::Ellipse(D2D1::Point2F(x, y), radius, radius), solid_brush);
 	else target->DrawEllipse(D2D1::Ellipse(D2D1::Point2F(x, y), radius, radius), solid_brush, thickness);
 }
 
-void DrawEllipse(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled)
+void DrawEllipse(float x, float y, float width, float height, float thickness, float r, float g, float b, float a, bool filled, float opacity/* = 1*/)
 {
 	solid_brush->SetColor(D2D1::ColorF(r, g, b, a));
 	if (filled) target->FillEllipse(D2D1::Ellipse(D2D1::Point2F(x, y), width, height), solid_brush);
@@ -104,7 +112,7 @@ void d2oSetup(HWND(*_targetWindow)(void)) {
 	target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 	DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&w_factory));
 	w_factory->CreateTextFormat(fontname.c_str(), NULL, DWRITE_FONT_WEIGHT_NORMAL,
-		DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &w_format);
+		DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"zh-cn", &w_format);
 }
 
 void mainLoop() 
@@ -153,8 +161,15 @@ void mainLoop()
 		target->BeginDraw();
 		target->Clear(D2D1::ColorF(0, 0, 0, 0));
 
-		if (drawLoopCallback != NULL) {
-			if (o_Foreground) {
+		//enable
+		std::lock_guard<std::mutex> _locker(mutexEnable);
+		if (!enable)
+			goto noDraw;
+
+		if (drawLoopCallback != NULL) 
+		{
+			if (o_Foreground) 
+			{
 				if (GetForegroundWindow() == hwndTarget)
 					goto toDraw;
 				else
@@ -171,7 +186,7 @@ void mainLoop()
 					fps = 1000 / (float)frameTime;
 					showTime = postTime;
 				}
-				DrawString(std::to_string(fps), 20, siz.width - 50, 0, 0, 1, 0);
+				DrawString(std::to_wstring(fps), 20, siz.width - 50, 0, 0, 1, 0);
 			}
 
 			if (o_VSync) {
@@ -272,6 +287,17 @@ void DirectOverlaySetup(DirectOverlayCallback callback, HWND(*_targetWindow)(voi
 BOOL IsDirectOverlayRunning()
 {
 	return ::IsWindow(overlayWindow);
+}
+
+void DirectOverlayEnable(BOOL bEnable)
+{
+	std::lock_guard<std::mutex> _locker(mutexEnable);
+	enable = bEnable;
+}
+
+BOOL IsDirectOverlayEnable()
+{
+	return enable;
 }
 
 void DirectOverlayStop()
