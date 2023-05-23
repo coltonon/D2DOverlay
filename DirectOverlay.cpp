@@ -6,6 +6,8 @@
 #include <comdef.h>
 #include <iostream>
 #include <ctime>
+#include <tchar.h>
+
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwmapi.lib")
 #pragma comment(lib, "dwrite.lib")
@@ -84,10 +86,10 @@ void d2oSetup(HWND(*_targetWindow)(void)) {
 	WNDCLASS wc = { };
 	wc.lpfnWndProc = WindowProc;
 	wc.hInstance = GetModuleHandle(0);
-	wc.lpszClassName = "d2do";
+	wc.lpszClassName = _T("d2do");
 	RegisterClass(&wc);
 	overlayWindow = CreateWindowEx(WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
-		wc.lpszClassName, "D2D Overlay", WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+		wc.lpszClassName, _T("D2D Overlay"), WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		NULL, NULL, wc.hInstance, NULL);
 
 	MARGINS mar = { -1 };
