@@ -27,8 +27,6 @@
 #include <Windows.h>
 #include <string>
 
-// Link the static library (make sure that file is in the same directory as this file)
-//#pragma comment(lib, "D2DOverlay.lib")
 
 // Requires the targetted window to be active and the foreground window to draw.
 #define D2DOV_REQUIRE_FOREGROUND	(1 << 0)
@@ -39,23 +37,25 @@
 // Attempts to limit the frametimes so you don't render at 500fps
 #define D2DOV_VSYNC					(1 << 2)
 
-// Sets the text font to Calibri
-#define D2DOV_FONT_CALIBRI			(1 << 3)
-
-// Sets the text font to Arial
-#define D2DOV_FONT_ARIAL			(1 << 4)
-
-// Sets the text font to Courier
-#define D2DOV_FONT_COURIER			(1 << 5)
-
-// Sets the text font to Gabriola
-#define D2DOV_FONT_GABRIOLA			(1 << 6)
-
-// Sets the text font to Impact
-#define D2DOV_FONT_IMPACT			(1 << 7)
+//// Sets the text font to Calibri
+//#define D2DOV_FONT_CALIBRI			(1 << 3)
+//
+//// Sets the text font to Arial
+//#define D2DOV_FONT_ARIAL			(1 << 4)
+//
+//// Sets the text font to Courier
+//#define D2DOV_FONT_COURIER			(1 << 5)
+//
+//// Sets the text font to Gabriola
+//#define D2DOV_FONT_GABRIOLA			(1 << 6)
+//
+//// Sets the text font to Impact
+//#define D2DOV_FONT_IMPACT			(1 << 7)
 
 // The function you call to set up the above options.  Make sure its called before the DirectOverlaySetup function
 void DirectOverlaySetOption(DWORD option);
+
+void DirectOverlaySetFontName(const std::wstring& fontname);
 
 // typedef for the callback function, where you'll do the drawing.
 typedef void(*DirectOverlayCallback)(int width, int height);
@@ -69,6 +69,9 @@ void DirectOverlaySetup(DirectOverlayCallback callbackFunction, HWND(*_targetWin
 
 // Tell direct overlay is running
 BOOL IsDirectOverlayRunning();
+
+//Destory overlay window
+void DirectOverlayStop();
 
 // Draws a line from (x1, y1) to (x2, y2), with a specified thickness.
 // Specify the color, and optionally an alpha for the line.

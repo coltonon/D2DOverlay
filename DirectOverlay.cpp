@@ -19,6 +19,7 @@ IDWriteTextLayout* w_layout = NULL;
 HWND overlayWindow = NULL;
 HINSTANCE appInstance = NULL;
 HWND(*targetWindow)(void) = NULL;
+HWND selfWindow = NULL;
 time_t preTime = clock();
 time_t showTime = clock();
 int fps = 0;
@@ -104,10 +105,14 @@ void d2oSetup(HWND(*_targetWindow)(void)) {
 		DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &w_format);
 }
 
-void mainLoop() {
+void mainLoop() 
+{
+	if (!overlayWindow)
+		return;
+
 	MSG message;
 	message.message = WM_NULL;
-	ShowWindow(overlayWindow, 1);
+	ShowWindow(overlayWindow, SW_SHOWNORMAL);
 	UpdateWindow(overlayWindow);
 	SetLayeredWindowAttributes(overlayWindow, RGB(0, 0, 0), 255, LWA_ALPHA);
 	if (message.message != WM_QUIT)
@@ -206,27 +211,34 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uiMessage, WPARAM wParam, LPARAM lPa
 	return 0;
 }
 
-//BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
-//{
-//	DWORD lpdwProcessId;
-//	GetWindowThreadProcessId(hwnd, &lpdwProcessId);
-//	if (lpdwProcessId == GetCurrentProcessId())
-//	{
-//		enumWindow = hwnd;
-//		return FALSE;
-//	}
-//	return TRUE;
-//}
+BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
+{
+	DWORD lpdwProcessId = 0;
+	GetWindowThreadProcessId(hwnd, &lpdwProcessId);
+	if (lpdwProcessId == GetCurrentProcessId())
+	{
+		selfWindow = hwnd;
+		return FALSE;
+	}
+	return TRUE;
+}
+
+HWND selfWndCallback()
+{
+	return selfWindow;
+}
 
 HANDLE evOverlayWindowCreate = NULL;
 DWORD WINAPI OverlayThread(LPVOID lpParam)
 {
-	//if (lpParam == NULL) {
-	//	EnumWindows(EnumWindowsProc, NULL);
-	//}
-	//else {
-	//	enumWindow = (HWND)lpParam;
-	//}
+	if (lpParam == NULL) 
+	{
+		EnumWindows(EnumWindowsProc, NULL);
+		if (!selfWindow)
+			return 0;
+		lpParam = selfWndCallback;
+	}
+
 	d2oSetup((HWND(*)())lpParam);
 	SetEvent(evOverlayWindowCreate);
 
@@ -260,13 +272,24 @@ BOOL IsDirectOverlayRunning()
 	return ::IsWindow(overlayWindow);
 }
 
+void DirectOverlayStop()
+{
+	::DestroyWindow(overlayWindow);
+	overlayWindow = NULL;
+}
+
 void DirectOverlaySetOption(DWORD option) {
 	if (option & D2DOV_REQUIRE_FOREGROUND) o_Foreground = true;
 	if (option & D2DOV_DRAW_FPS) o_DrawFPS = true;
 	if (option & D2DOV_VSYNC) o_VSync = true;
-	if (option & D2DOV_FONT_ARIAL) fontname = L"arial";
-	if (option & D2DOV_FONT_COURIER) fontname = L"Courier";
-	if (option & D2DOV_FONT_CALIBRI) fontname = L"Calibri";
-	if (option & D2DOV_FONT_GABRIOLA) fontname = L"Gabriola";
-	if (option & D2DOV_FONT_IMPACT) fontname = L"Impact";
+	//if (option & D2DOV_FONT_ARIAL) fontname = L"arial";
+	//if (option & D2DOV_FONT_COURIER) fontname = L"Courier";
+	//if (option & D2DOV_FONT_CALIBRI) fontname = L"Calibri";
+	//if (option & D2DOV_FONT_GABRIOLA) fontname = L"Gabriola";
+	//if (option & D2DOV_FONT_IMPACT) fontname = L"Impact";
+}
+
+void DirectOverlaySetFontName(const std::wstring& _fontname)
+{
+	fontname = _fontname;
 }

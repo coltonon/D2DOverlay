@@ -8,17 +8,25 @@ void drawLoop(int width, int height) {
 	DrawEllipse(500, 100, 50, 20, 5, 1, 0, 0, 1, 0);
 }
 
-//HWND g_hwnd = NULL;
+HWND g_exitHwnd = NULL;
 HWND getHwndCallback()
 {
-	return GetForegroundWindow();
-	//return g_hwnd;
+	HWND foreWin = GetForegroundWindow();
+	if (g_exitHwnd && foreWin == g_exitHwnd)
+	{
+		DirectOverlayStop();
+		return NULL;
+	}
+	return foreWin;
 }
 
 void main()
 {
-	//g_hwnd = FindWindow(NULL, "无标题 - 记事本");
-	DirectOverlaySetOption(D2DOV_DRAW_FPS | D2DOV_FONT_IMPACT);
+	//遇到记事本则退出
+	g_exitHwnd = FindWindow(NULL, "无标题 - 记事本");
+
+	DirectOverlaySetOption(D2DOV_DRAW_FPS);
+	DirectOverlaySetFontName(L"华文琥珀");
 	DirectOverlaySetup(drawLoop, getHwndCallback);
 	while (IsDirectOverlayRunning())
 		Sleep(1000);
